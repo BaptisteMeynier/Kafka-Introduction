@@ -1,4 +1,4 @@
-package com.meynier.kafka;
+package com.meynier.kafka.configuration;
 
 import java.util.Map;
 

@@ -1,9 +1,10 @@
-package com.meynier.kafka;
+package com.meynier.kafka.creator;
 
 import java.util.Collections;
 
 import java.util.Properties;
 
+import com.meynier.kafka.constants.IKafkaConstants;
 import org.apache.kafka.clients.consumer.Consumer;
 
 import org.apache.kafka.clients.consumer.ConsumerConfig;

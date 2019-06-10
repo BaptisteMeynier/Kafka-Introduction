@@ -2,6 +2,8 @@
 
 ## ZooKeeper
 
+ZooKeeper is a centralized service for maintaining configuration information, naming, providing distributed synchronization, and providing group services.
+
 ## Kafka
 
 ##### Create a topic:
@@ -13,6 +15,10 @@ example : bin/kafka-topics.sh --create --zookeeper localhost:2181 --replication-
 
 ##### List topic:
 bin/kafka-topics.sh --list --zookeeper localhost:2181
+
+## Launch
+### Docker-compose
+docker-compose -f src/main/docker/zk-single-kafka-single.yml up
 
 
 #### Documentation

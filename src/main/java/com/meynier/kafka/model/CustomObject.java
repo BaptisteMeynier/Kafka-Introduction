@@ -1,4 +1,4 @@
-package com.meynier.kafka;
+package com.meynier.kafka.model;
 
 public class CustomObject {
     private int id;

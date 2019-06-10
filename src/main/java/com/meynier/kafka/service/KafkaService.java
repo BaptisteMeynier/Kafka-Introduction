@@ -1,49 +1,34 @@
-package com.meynier.kafka;
+package com.meynier.kafka.service;
+
+import com.meynier.kafka.constants.IKafkaConstants;
+import com.meynier.kafka.creator.ConsumerCreator;
+import com.meynier.kafka.creator.ProducerCreator;
+import org.apache.kafka.clients.consumer.Consumer;
+import org.apache.kafka.clients.consumer.ConsumerRecords;
+import org.apache.kafka.clients.producer.Producer;
+import org.apache.kafka.clients.producer.ProducerRecord;
+import org.apache.kafka.clients.producer.RecordMetadata;
 
 import java.util.concurrent.ExecutionException;
 
-import org.apache.kafka.clients.consumer.Consumer;
+public class KafkaService {
 
-import org.apache.kafka.clients.consumer.ConsumerRecords;
-
-import org.apache.kafka.clients.producer.Producer;
-
-import org.apache.kafka.clients.producer.ProducerRecord;
-
-import org.apache.kafka.clients.producer.RecordMetadata;
-
-public class App {
-
-    public static void main(String[] args) {
-
-        runProducer();
-
-        //runConsumer();
-
-    }
-
-    static void runConsumer() {
-
+    public static void runConsumer() {
         Consumer<Long, String> consumer = ConsumerCreator.createConsumer();
-
         int noMessageFound = 0;
 
         while (true) {
-
             ConsumerRecords<Long, String> consumerRecords = consumer.poll(1000);
 
             // 1000 is the time in milliseconds consumer will wait if no record is found at broker.
 
             if (consumerRecords.count() == 0) {
-
                 noMessageFound++;
-
                 if (noMessageFound > IKafkaConstants.MAX_NO_MESSAGE_FOUND_COUNT)
                     // If no message found count is reached to threshold exit loop.
                     break;
                 else
                     continue;
-
             }
 
             //print each record.
@@ -56,16 +41,12 @@ public class App {
             });
 
             // commits the offset of record to broker.
-
             consumer.commitAsync();
-
         }
-
         consumer.close();
-
     }
 
-    static void runProducer() {
+    public static void runProducer() {
 
         Producer<Long, String> producer = ProducerCreator.createProducer();
 
@@ -89,7 +70,6 @@ public class App {
                 System.out.println("Error in sending record");
                 System.out.println(e);
             }
-
         }
 
     }

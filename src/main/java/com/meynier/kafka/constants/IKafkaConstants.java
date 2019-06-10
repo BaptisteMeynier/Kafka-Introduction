@@ -1,4 +1,4 @@
-package com.meynier.kafka;
+package com.meynier.kafka.constants;
 
 public interface IKafkaConstants {
 

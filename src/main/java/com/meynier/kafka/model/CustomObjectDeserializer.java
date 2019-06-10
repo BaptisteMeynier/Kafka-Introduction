@@ -1,12 +1,9 @@
-package com.meynier.kafka;
+package com.meynier.kafka.model;
 
 import java.util.Map;
 
+import com.meynier.kafka.model.CustomObject;
 import org.apache.kafka.common.serialization.Deserializer;
-
-import org.slf4j.Logger;
-
-import org.slf4j.LoggerFactory;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 
