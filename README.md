@@ -23,3 +23,5 @@ docker-compose -f src/main/docker/zk-single-kafka-single.yml up
 
 #### Documentation
 https://www.youtube.com/watch?v=KWAELycyxTc
+https://dzone.com/articles/kafka-producer-and-consumer-example
+https://kafka.apache.org/intro
