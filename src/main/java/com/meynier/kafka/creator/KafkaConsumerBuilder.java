@@ -1,14 +1,18 @@
 package com.meynier.kafka.creator;
 
 import com.meynier.kafka.constants.IKafkaConstants;
+import org.apache.kafka.clients.consumer.Consumer;
+import org.apache.kafka.clients.consumer.ConsumerConfig;
+import org.apache.kafka.clients.consumer.KafkaConsumer;
 import org.apache.kafka.common.serialization.Deserializer;
+import org.apache.kafka.common.serialization.LongDeserializer;
+import org.apache.kafka.common.serialization.StringDeserializer;
 
-import java.util.Objects;
+import java.util.*;
 
 public class KafkaConsumerBuilder {
 
-
-    private KafkaConsumerBuilder(Builder builder){
+    private KafkaConsumerBuilder(Builder builder) {
 
     }
 
@@ -40,6 +44,7 @@ public class KafkaConsumerBuilder {
 
     public interface OffsetStep {
         OptionalConfigurationStep fromEarlier();
+
         OptionalConfigurationStep fromLatest();
     }
 
@@ -50,13 +55,19 @@ public class KafkaConsumerBuilder {
 
         OptionalConfigurationStep disableAutocommit();
 
-        KafkaConsumerBuilder build();
+        Consumer<Long, String> subscribe();
     }
 
 
-    private static class Builder implements InitialStep, BrokerHostStep, GroupIdStep, KeyDeserializerStep, ValueSerializerStep, OffsetStep, OptionalConfigurationStep {
+    private static class Builder<T,U> implements InitialStep, BrokerHostStep, GroupIdStep, KeyDeserializerStep, ValueSerializerStep, OffsetStep, OptionalConfigurationStep {
 
-        private String kafkaBroker = IKafkaConstants.KAFKA_BROKERS;
+        private String BROKER_PATTERN = "%s:%n";
+
+        private String host;
+
+        private int port;
+
+        private List<String> kafkaBroker = new ArrayList<>();
 
         private Integer messageFoundCount = IKafkaConstants.MESSAGE_COUNT;
 
@@ -66,24 +77,27 @@ public class KafkaConsumerBuilder {
 
         private String groupIdConfig = IKafkaConstants.GROUP_ID_CONFIG;
 
-        private String offsetResetLatest = IKafkaConstants.OFFSET_RESET_LATEST;
-
-        private String offsetResetEarlier = IKafkaConstants.OFFSET_RESET_EARLIER;
+        private String offset;
 
         private Integer maxPollRecords = IKafkaConstants.MAX_POLL_RECORDS;
+
+        private String keyDeserializer;
+
+        private String valueDeserializer;
 
         private boolean autoCommit = true;
 
 
-        private void checkArg(String arg, final String msg){
-            if(Objects.nonNull(arg) && arg.isEmpty()){
+        private void checkArg(String arg, final String msg) {
+            if (Objects.nonNull(arg) && arg.isEmpty()) {
                 throw new IllegalArgumentException(msg);
             }
-            Objects.requireNonNull(arg,msg);
+            Objects.requireNonNull(arg, msg);
         }
 
         @Override
         public OptionalConfigurationStep setMaxPollRecords(int maxPollRecords) {
+            this.maxPollRecords = maxPollRecords;
             return this;
         }
 
@@ -101,49 +115,66 @@ public class KafkaConsumerBuilder {
 
         @Override
         public BrokerHostStep addBrokerHost(String host) {
-            checkArg(host,"Broker host cannot be null or empty");
-
+            checkArg(host, "Broker host cannot be null or empty");
+            this.host = host;
             return this;
         }
 
         @Override
         public GroupIdStep setGroupId(String groupId) {
+            this.groupIdConfig = groupId;
             return this;
         }
 
         @Override
         public InitialStep withBrokerPort(int port) {
+            this.kafkaBroker.add(String.format(BROKER_PATTERN, host, port));
             return this;
         }
 
         @Override
         public KeyDeserializerStep setTopic(String topicName) {
+            this.topicName = topicName;
             return this;
         }
 
         @Override
         public ValueSerializerStep setKeyDeserializer(Class<? extends Deserializer> deserializer) {
+            this.keyDeserializer = deserializer.getName();
             return this;
         }
 
         @Override
         public OffsetStep setValueDeserializer(Class<? extends Deserializer> deserializer) {
+            this.valueDeserializer = deserializer.getName();
             return this;
         }
 
         @Override
         public OptionalConfigurationStep fromEarlier() {
+            this.offset = IKafkaConstants.OFFSET_RESET_EARLIER;
             return this;
         }
 
         @Override
         public OptionalConfigurationStep fromLatest() {
+            this.offset = IKafkaConstants.OFFSET_RESET_LATEST;
             return this;
         }
 
         @Override
-        public KafkaConsumerBuilder build() {
-            return new KafkaConsumerBuilder(this);
+        public Consumer<T, U> subscribe() {
+            Properties props = new Properties();
+            props.put(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, String.join(",",this.kafkaBroker));
+            props.put(ConsumerConfig.GROUP_ID_CONFIG, this.groupIdConfig);
+            props.put(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, this.keyDeserializer);
+            props.put(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, this.valueDeserializer);
+            props.put(ConsumerConfig.MAX_POLL_RECORDS_CONFIG, this.maxPollRecords);
+            props.put(ConsumerConfig.ENABLE_AUTO_COMMIT_CONFIG, this.autoCommit);
+            props.put(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, this.offset);
+            Consumer<Long, String> consumer = new KafkaConsumer<>(props);
+            consumer.subscribe(Collections.singletonList(this.topicName));
+            return consumer;
         }
     }
 
