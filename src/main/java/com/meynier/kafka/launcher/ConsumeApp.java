@@ -4,6 +4,9 @@ package com.meynier.kafka.launcher;
 import com.meynier.kafka.creator.KafkaConsumerBuilder;
 import com.meynier.kafka.service.KafkaService;
 import org.apache.commons.cli.*;
+import org.apache.kafka.clients.consumer.Consumer;
+import org.apache.kafka.common.serialization.IntegerDeserializer;
+import org.apache.kafka.common.serialization.StringDeserializer;
 
 import java.util.Arrays;
 import java.util.Optional;
@@ -38,6 +41,7 @@ public class ConsumeApp {
     static {
         options.addOption(new Option("b", "KAFKA_BROKERS", true, "List of kafka broker compliant with the following regex format => (HOST:PORT,{1})+"));
         options.addOption(new Option("t", "TOPIC_NAME", true, "Topic name that will be consumed"));
+        options.addOption(new Option("g", "GROUP_ID", true, "Group id of the consumer"));
         options.addOption(new Option("e", "OFFSET_RESET_EARLIER", false, "Set the reading offset at the earliest position"));
         options.addOption(new Option("l", "OFFSET_RESET_LATEST", false, "Set the reading offset at the latest position"));
     }
@@ -49,31 +53,18 @@ public class ConsumeApp {
         CommandLineParser parser = new DefaultParser();
         CommandLine cmd = parser.parse(options, args);
 
-        if (cmd.hasOption("b")) {
+        if (cmd.hasOption("e")) {
             // print the date and time
         }
 
-        KafkaConsumerBuilder.InitialStep initialStep;
-        String kafkaBrokers = cmd.getOptionValue("b");
-        Optional<Object> reduce = Arrays.stream(kafkaBrokers.split(","))
-                .flatMap(aBroker -> Arrays.stream(aBroker.split(":"))
-                .reduce(
-                        new KafkaConsumerBuilder.Builder()),
-                        ()->{},
-                        (host,port) -> {
-                            KafkaConsumerBuilder.addBrokerHost(host).withPort(Integer.valueOf(port));
-                        }
-                );
-
-
-        KafkaConsumerBuilder
-                .addBrokerHost("").withPort(8080)
-                .addBrokerHost("").withPort(74)
-                .setGroupId("")
-                .setTopic("")
+        Consumer consumer = KafkaConsumerBuilder
+                .<StringDeserializer, IntegerDeserializer>build()
+                .addBrokers(cmd.getOptionValue("b"))
+                .setGroupId(cmd.getOptionValue("g"))
+                .setTopic(cmd.getOptionValue("t"))
                 .fromEarlier()
                 .subscribe();
 
-        KafkaService.runConsumer();
+        KafkaService.runConsumer(consumer);
     }
 }

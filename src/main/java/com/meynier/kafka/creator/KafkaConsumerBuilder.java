@@ -5,21 +5,24 @@ import org.apache.kafka.clients.consumer.Consumer;
 import org.apache.kafka.clients.consumer.ConsumerConfig;
 import org.apache.kafka.clients.consumer.KafkaConsumer;
 import org.apache.kafka.common.serialization.Deserializer;
-import org.apache.kafka.common.serialization.LongDeserializer;
-import org.apache.kafka.common.serialization.StringDeserializer;
 
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
 import java.util.*;
 
-public class KafkaConsumerBuilder<T extends Deserializer,U extends Deserializer> {
+public class KafkaConsumerBuilder{
 
-    private KafkaConsumerBuilder(Builder builder) {
-
+    public static <T extends Deserializer, U extends Deserializer> BrokerStep build() {
+        return new Builder();
     }
 
-    public static BrokerHostStep addBrokerHost(final String host) {
-        return new Builder();
+    public interface BrokerStep {
+        BrokerHostsStep addBrokers(final String brokers);
+        BrokerHostStep addBrokerHost(final String groupId);
+    }
+
+    public interface BrokerHostsStep {
+        GroupIdStep setGroupId(final String groupId);
     }
 
     public interface InitialStep {
@@ -40,7 +43,7 @@ public class KafkaConsumerBuilder<T extends Deserializer,U extends Deserializer>
         OptionalConfigurationStep fromLatest();
     }
 
-    public interface OptionalConfigurationStep <T,U> {
+    public interface OptionalConfigurationStep <T, U>{
         OptionalConfigurationStep setMaxPollRecords(int maxPollRecords);
         OptionalConfigurationStep enableAutoCommit();
         OptionalConfigurationStep disableAutocommit();
@@ -49,13 +52,15 @@ public class KafkaConsumerBuilder<T extends Deserializer,U extends Deserializer>
     }
 
 
-    private static class Builder<T,U> implements InitialStep, BrokerHostStep, GroupIdStep, OffsetStep, OptionalConfigurationStep {
+    private static class Builder<T, U> implements InitialStep, BrokerHostStep,BrokerStep, BrokerHostsStep, GroupIdStep, OffsetStep, OptionalConfigurationStep {
 
         private String BROKER_PATTERN = "%s:%n";
 
         private String host;
 
         private List<String> kafkaBroker = new ArrayList<>();
+
+        private String brokers;
 
         private String topicName = IKafkaConstants.TOPIC_NAME;
 
@@ -90,6 +95,12 @@ public class KafkaConsumerBuilder<T extends Deserializer,U extends Deserializer>
         @Override
         public OptionalConfigurationStep disableAutocommit() {
             this.autoCommit = false;
+            return this;
+        }
+
+        @Override
+        public BrokerHostsStep addBrokers(String brokers) {
+            this.brokers=brokers;
             return this;
         }
 

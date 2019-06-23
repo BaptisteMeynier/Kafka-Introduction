@@ -9,6 +9,7 @@ import org.apache.kafka.clients.producer.Producer;
 import org.apache.kafka.clients.producer.ProducerRecord;
 import org.apache.kafka.clients.producer.RecordMetadata;
 
+import java.time.Duration;
 import java.util.concurrent.ExecutionException;
 
 public class KafkaService {
@@ -40,12 +41,12 @@ public class KafkaService {
         }
     }
 
-    public static void runConsumer() {
-        Consumer<Long, String> consumer = ConsumerCreator.createConsumer();
+    public static void runConsumer(Consumer consumer) {
         int noMessageFound = 0;
 
+
         while (true) {
-            ConsumerRecords<Long, String> consumerRecords = consumer.poll(1000);
+            ConsumerRecords<Long, String> consumerRecords = consumer.poll(Duration.ofSeconds(300));
 
             // 1000 is the time in milliseconds consumer will wait if no record is found at broker.
 
