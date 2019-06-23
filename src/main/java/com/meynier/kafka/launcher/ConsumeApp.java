@@ -1,8 +1,12 @@
 package com.meynier.kafka.launcher;
 
 
+import com.meynier.kafka.creator.KafkaConsumerBuilder;
 import com.meynier.kafka.service.KafkaService;
-import org.apache.commons.cli.Options;
+import org.apache.commons.cli.*;
+
+import java.util.Arrays;
+import java.util.Optional;
 
 public class ConsumeApp {
 
@@ -31,18 +35,44 @@ public class ConsumeApp {
     // create Options object
     static Options options = new Options();
 
-    static{
-        options.addOption("KAFKA_BROKERS", true, "List of kafka broker");
-        options.addOption("TOPIC_NAME", true, "Topic name that will be consumed");
-        options.addOption("e", false, "Set the reading offset at the earliest position");
-        options.addOption("l", false, "Set the reading offset at the latest position");
+    static {
+        options.addOption(new Option("b", "KAFKA_BROKERS", true, "List of kafka broker compliant with the following regex format => (HOST:PORT,{1})+"));
+        options.addOption(new Option("t", "TOPIC_NAME", true, "Topic name that will be consumed"));
+        options.addOption(new Option("e", "OFFSET_RESET_EARLIER", false, "Set the reading offset at the earliest position"));
+        options.addOption(new Option("l", "OFFSET_RESET_LATEST", false, "Set the reading offset at the latest position"));
     }
 
 
-    public static void main(String[] args) {
+    public static void main(String[] args) throws ParseException {
         // add t option
 
+        CommandLineParser parser = new DefaultParser();
+        CommandLine cmd = parser.parse(options, args);
 
+        if (cmd.hasOption("b")) {
+            // print the date and time
+        }
+
+        KafkaConsumerBuilder.InitialStep initialStep;
+        String kafkaBrokers = cmd.getOptionValue("b");
+        Optional<Object> reduce = Arrays.stream(kafkaBrokers.split(","))
+                .flatMap(aBroker -> Arrays.stream(aBroker.split(":"))
+                .reduce(
+                        new KafkaConsumerBuilder.Builder()),
+                        ()->{},
+                        (host,port) -> {
+                            KafkaConsumerBuilder.addBrokerHost(host).withPort(Integer.valueOf(port));
+                        }
+                );
+
+
+        KafkaConsumerBuilder
+                .addBrokerHost("").withPort(8080)
+                .addBrokerHost("").withPort(74)
+                .setGroupId("")
+                .setTopic("")
+                .fromEarlier()
+                .subscribe();
 
         KafkaService.runConsumer();
     }
