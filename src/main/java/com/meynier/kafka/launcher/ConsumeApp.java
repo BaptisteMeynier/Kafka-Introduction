@@ -33,7 +33,6 @@ public class ConsumeApp {
             os = OffsetStrategy.LATEST;
         }
 
-        System.out.println("T => " + cmd.getOptionValue("t"));
         final Consumer consumer =
                 KafkaConsumerBuilder
                 .build()

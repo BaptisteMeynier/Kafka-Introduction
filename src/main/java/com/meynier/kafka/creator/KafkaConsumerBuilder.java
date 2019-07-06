@@ -4,12 +4,8 @@ import com.meynier.kafka.constants.IKafkaConstants;
 import org.apache.kafka.clients.consumer.Consumer;
 import org.apache.kafka.clients.consumer.ConsumerConfig;
 import org.apache.kafka.clients.consumer.KafkaConsumer;
-import org.apache.kafka.common.serialization.Deserializer;
-import org.apache.kafka.common.serialization.IntegerDeserializer;
-import org.apache.kafka.common.serialization.StringDeserializer;
+import org.apache.kafka.common.serialization.*;
 
-import java.lang.reflect.ParameterizedType;
-import java.lang.reflect.Type;
 import java.util.*;
 
 public class KafkaConsumerBuilder{
@@ -154,8 +150,8 @@ public class KafkaConsumerBuilder{
             final Properties props = new Properties();
             props.put(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, String.join(",",this.kafkaBroker));
             props.put(ConsumerConfig.GROUP_ID_CONFIG, this.groupIdConfig);
-            props.put(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class.getName());
-            props.put(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, IntegerDeserializer.class.getName());
+            props.put(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, LongDeserializer.class.getName());
+            props.put(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class.getName());
             props.put(ConsumerConfig.MAX_POLL_RECORDS_CONFIG, this.maxPollRecords);
             props.put(ConsumerConfig.ENABLE_AUTO_COMMIT_CONFIG, this.autoCommit);
             props.put(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, this.offset);
