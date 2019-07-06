@@ -5,6 +5,8 @@ import org.apache.kafka.clients.consumer.Consumer;
 import org.apache.kafka.clients.consumer.ConsumerConfig;
 import org.apache.kafka.clients.consumer.KafkaConsumer;
 import org.apache.kafka.common.serialization.Deserializer;
+import org.apache.kafka.common.serialization.IntegerDeserializer;
+import org.apache.kafka.common.serialization.StringDeserializer;
 
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
@@ -12,7 +14,7 @@ import java.util.*;
 
 public class KafkaConsumerBuilder{
 
-    public static <T extends Deserializer, U extends Deserializer> BrokerStep build() {
+    public static BrokerStep build() {
         return new Builder();
     }
 
@@ -39,28 +41,27 @@ public class KafkaConsumerBuilder{
     }
 
     public interface OffsetStep {
+        OptionalConfigurationStep setOffsetStrategy(OffsetStrategy os);
         OptionalConfigurationStep fromEarlier();
         OptionalConfigurationStep fromLatest();
     }
 
-    public interface OptionalConfigurationStep <T, U>{
+    public interface OptionalConfigurationStep {
         OptionalConfigurationStep setMaxPollRecords(int maxPollRecords);
         OptionalConfigurationStep enableAutoCommit();
         OptionalConfigurationStep disableAutocommit();
 
-        Consumer<T, U> subscribe();
+        Consumer subscribe();
     }
 
 
-    private static class Builder<T, U> implements InitialStep, BrokerHostStep,BrokerStep, BrokerHostsStep, GroupIdStep, OffsetStep, OptionalConfigurationStep {
+    private static class Builder implements InitialStep, BrokerHostStep,BrokerStep, BrokerHostsStep, GroupIdStep, OffsetStep, OptionalConfigurationStep {
 
         private String BROKER_PATTERN = "%s:%n";
 
         private String host;
 
         private List<String> kafkaBroker = new ArrayList<>();
-
-        private String brokers;
 
         private String topicName = IKafkaConstants.TOPIC_NAME;
 
@@ -100,7 +101,7 @@ public class KafkaConsumerBuilder{
 
         @Override
         public BrokerHostsStep addBrokers(String brokers) {
-            this.brokers=brokers;
+            this.kafkaBroker.add(brokers);
             return this;
         }
 
@@ -125,8 +126,14 @@ public class KafkaConsumerBuilder{
 
         @Override
         public OffsetStep setTopic(String topicName) {
-            checkArg(host, "Topic cannot be null or empty");
+            checkArg(topicName, "Topic cannot be null or empty");
             this.topicName = topicName;
+            return this;
+        }
+
+        @Override
+        public OptionalConfigurationStep setOffsetStrategy(OffsetStrategy os) {
+            this.offset = os.toString();
             return this;
         }
 
@@ -143,19 +150,16 @@ public class KafkaConsumerBuilder{
         }
 
         @Override
-        public Consumer<T, U> subscribe() {
-            final Type[] deserializer = ((ParameterizedType) getClass().getGenericSuperclass()).getActualTypeArguments();
-
-            final Class<T> type;
+        public Consumer subscribe() {
             final Properties props = new Properties();
             props.put(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, String.join(",",this.kafkaBroker));
             props.put(ConsumerConfig.GROUP_ID_CONFIG, this.groupIdConfig);
-            props.put(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, deserializer[0].getClass().getName());
-            props.put(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, deserializer[1].getClass().getName());
+            props.put(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class.getName());
+            props.put(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, IntegerDeserializer.class.getName());
             props.put(ConsumerConfig.MAX_POLL_RECORDS_CONFIG, this.maxPollRecords);
             props.put(ConsumerConfig.ENABLE_AUTO_COMMIT_CONFIG, this.autoCommit);
             props.put(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, this.offset);
-            final Consumer<T, U> consumer = new KafkaConsumer<>(props);
+            final Consumer consumer = new KafkaConsumer<>(props);
             consumer.subscribe(Collections.singletonList(this.topicName));
             return consumer;
         }
