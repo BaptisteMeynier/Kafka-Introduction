@@ -8,56 +8,60 @@ import org.apache.kafka.common.serialization.*;
 
 import java.util.*;
 
-public class KafkaConsumerBuilder{
+public class KafkaConsumerBuilder {
 
     public static BrokerStep build() {
         return new Builder();
     }
 
     public interface BrokerStep {
-        BrokerHostsStep addBrokers(final String brokers);
+        GroupIdStep addBrokers(final String brokers);
+
         BrokerHostStep addBrokerHost(final String groupId);
     }
 
-    public interface BrokerHostsStep {
-        GroupIdStep setGroupId(final String groupId);
-    }
-
-    public interface InitialStep {
+    public interface GroupIdStep {
         BrokerHostStep addBrokerHost(final String host);
-        GroupIdStep setGroupId(final String groupId);
+
+        TopicStep setGroupId(final String groupId);
     }
 
     public interface BrokerHostStep {
-        InitialStep withPort(final int port);
+        GroupIdStep withPort(final int port);
     }
 
-    public interface GroupIdStep {
+    public interface TopicStep {
         OffsetStep setTopic(final String topicName);
     }
 
     public interface OffsetStep {
         OptionalConfigurationStep setOffsetStrategy(OffsetStrategy os);
+
         OptionalConfigurationStep fromEarlier();
+
         OptionalConfigurationStep fromLatest();
     }
 
     public interface OptionalConfigurationStep {
+        OptionalConfigurationStep setOptionalParam(String key, String value);
+
         OptionalConfigurationStep setMaxPollRecords(int maxPollRecords);
+
         OptionalConfigurationStep enableAutoCommit();
+
         OptionalConfigurationStep disableAutocommit();
 
         Consumer subscribe();
     }
 
 
-    private static class Builder implements InitialStep, BrokerHostStep,BrokerStep, BrokerHostsStep, GroupIdStep, OffsetStep, OptionalConfigurationStep {
+    private static class Builder implements BrokerHostStep, BrokerStep, GroupIdStep, OffsetStep, TopicStep, OptionalConfigurationStep {
 
         private String BROKER_PATTERN = "%s:%n";
 
         private String host;
 
-        private List<String> kafkaBroker = new ArrayList<>();
+        private final List<String> kafkaBroker = new ArrayList<>();
 
         private String topicName = IKafkaConstants.TOPIC_NAME;
 
@@ -69,6 +73,7 @@ public class KafkaConsumerBuilder{
 
         private boolean autoCommit = IKafkaConstants.AUTO_COMMIT;
 
+        private final Properties properties = new Properties();
 
         private void checkArg(String arg, final String msg) {
             if (Objects.nonNull(arg) && arg.isEmpty()) {
@@ -96,7 +101,7 @@ public class KafkaConsumerBuilder{
         }
 
         @Override
-        public BrokerHostsStep addBrokers(String brokers) {
+        public GroupIdStep addBrokers(String brokers) {
             this.kafkaBroker.add(brokers);
             return this;
         }
@@ -109,13 +114,13 @@ public class KafkaConsumerBuilder{
         }
 
         @Override
-        public GroupIdStep setGroupId(String groupId) {
+        public TopicStep setGroupId(String groupId) {
             this.groupIdConfig = groupId;
             return this;
         }
 
         @Override
-        public InitialStep withPort(int port) {
+        public GroupIdStep withPort(int port) {
             this.kafkaBroker.add(String.format(BROKER_PATTERN, host, port));
             return this;
         }
@@ -146,16 +151,25 @@ public class KafkaConsumerBuilder{
         }
 
         @Override
+        public OptionalConfigurationStep setOptionalParam(String key, String value) {
+            if (properties.containsKey(key)) {
+                throw new IllegalArgumentException("Key was already recorded");
+            }
+            this.properties.put(key, value);
+            return this;
+        }
+
+
+        @Override
         public Consumer subscribe() {
-            final Properties props = new Properties();
-            props.put(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, String.join(",",this.kafkaBroker));
-            props.put(ConsumerConfig.GROUP_ID_CONFIG, this.groupIdConfig);
-            props.put(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, LongDeserializer.class.getName());
-            props.put(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class.getName());
-            props.put(ConsumerConfig.MAX_POLL_RECORDS_CONFIG, this.maxPollRecords);
-            props.put(ConsumerConfig.ENABLE_AUTO_COMMIT_CONFIG, this.autoCommit);
-            props.put(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, this.offset);
-            final Consumer consumer = new KafkaConsumer<>(props);
+            properties.put(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, String.join(",", this.kafkaBroker));
+            properties.put(ConsumerConfig.GROUP_ID_CONFIG, this.groupIdConfig);
+            properties.put(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, LongDeserializer.class.getName());
+            properties.put(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class.getName());
+            properties.put(ConsumerConfig.MAX_POLL_RECORDS_CONFIG, this.maxPollRecords);
+            properties.put(ConsumerConfig.ENABLE_AUTO_COMMIT_CONFIG, this.autoCommit);
+            properties.put(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, this.offset);
+            final Consumer consumer = new KafkaConsumer<>(properties);
             consumer.subscribe(Collections.singletonList(this.topicName));
             return consumer;
         }
