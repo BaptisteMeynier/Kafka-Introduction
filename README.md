@@ -7,14 +7,27 @@ ZooKeeper is a centralized service for maintaining configuration information, na
 ## Kafka
 
 ##### Create a topic:
-bin/kafka-topics.sh --create --zookeeper localhost:2181 --replication-factor 1 
---partitions 1 --topic topic-name   
-example : bin/kafka-topics.sh --create --zookeeper localhost:2181 --replication-factor 1   
-          --partitions 1 --topic Hello-Kafka   
-
+bin/kafka-topics.sh --create --zookeeper localhost:2181 --replication-factor 1 --partitions 1 --topic topic-name       
+example : bin/kafka-topics.sh --create --zookeeper localhost:2181 --replication-factor 1 --partitions 1 --topic Hello-Kafka        
 
 ##### List topic:
 bin/kafka-topics.sh --list --zookeeper localhost:2181
+
+##### Alter topic:
+bin/kafka-topics.sh —zookeeper localhost:2181 --alter --topic topic_name --partitions count   
+We have already created a topic “Hello-Kafka” with single partition count and one replica factor.   
+Now using “alter” command we have changed the partition count.   
+bin/kafka-topics.sh --zookeeper localhost:2181 --alter --topic Hello-kafka --parti-tions 2    
+
+##### Delete topic:
+bin/kafka-topics.sh --zookeeper localhost:2181 --delete --topic Hello-kafka
+
+
+##### EARLIEST LATEST
+When you consume a topic you can choose to set two reading strategy for your new consumming GROUP.   
+Either consuming message from the begining (EARLIEST)  
+Either consuming only new producing message (LATEST)   
+When you have already consume messages from a group you cant use this feature for reprocess then
 
 ## Launch
 ### Docker-compose
@@ -35,6 +48,10 @@ Hello-Kafka
 __confluent.support.metrics   
 __consumer_offsets   
 demo   
+
+root@zoo1:/# kafka-topics --describe --zookeeper localhost:2181 --topic demo
+Topic:demo      PartitionCount:1        ReplicationFactor:1     Configs:
+        Topic: demo     Partition: 0    Leader: 1       Replicas: 1     Isr: 1
 ```
 
 

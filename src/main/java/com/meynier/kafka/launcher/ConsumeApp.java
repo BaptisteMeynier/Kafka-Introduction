@@ -18,7 +18,7 @@ public class ConsumeApp {
         options.addOption(new Option("b", "KAFKA_BROKERS", true, "List of kafka broker compliant with the following regex format => (HOST:PORT,{1})+"));
         options.addOption(new Option("g", "GROUP_ID", true, "Group id of the consumer"));
         options.addOption(new Option("t", "TOPIC_NAME", true, "Topic name that will be consumed"));
-        options.addOption(new Option("e", "OFFSET_RESET_EARLIER", false, "Set the reading offset at the earliest position"));
+        options.addOption(new Option("e", "OFFSET_RESET_EARLIEST", false, "Set the reading offset at the earliest position"));
         options.addOption(new Option("l", "OFFSET_RESET_LATEST", false, "Set the reading offset at the latest position"));
     }
 
@@ -33,15 +33,15 @@ public class ConsumeApp {
             os = OffsetStrategy.LATEST;
         }
 
+        final String topicName = cmd.getOptionValue("t");
+
         final Consumer consumer =
                 KafkaConsumerBuilder
-                .build()
                 .addBrokers(cmd.getOptionValue("b"))
                 .setGroupId(cmd.getOptionValue("g"))
-                .setTopic(cmd.getOptionValue("t"))
                 .setOffsetStrategy(os)
-                .subscribe();
+                .build();
 
-        KafkaService.runConsumer(consumer);
+        KafkaService.runConsumer(consumer,topicName);
     }
 }

@@ -6,6 +6,7 @@ import com.meynier.kafka.service.KafkaService;
 import org.apache.commons.cli.*;
 import org.apache.kafka.clients.consumer.Consumer;
 import org.apache.kafka.clients.producer.Producer;
+import org.apache.kafka.clients.producer.ProducerConfig;
 
 public class ProduceApp {
 
@@ -24,13 +25,14 @@ public class ProduceApp {
 
         final Producer producer =
                 KafkaProducerBuilder
-                        .build()
                         .addBrokers(cmd.getOptionValue("b"))
                         .setClientId(cmd.getOptionValue("c"))
-                        .setTopic(cmd.getOptionValue("t"))
-                        .produce();
+                        .setOptionalParam(ProducerConfig.ACKS_CONFIG,"ALL")
+                        .setOptionalParam(ProducerConfig.RETRIES_CONFIG,"5")
+                        .setOptionalParam(ProducerConfig.ENABLE_IDEMPOTENCE_CONFIG,Boolean.TRUE.toString())
+                        .build();
 
-        KafkaService.runProducer(producer);
+        KafkaService.runProducer(producer, cmd.getOptionValue('t'));
     }
 
 

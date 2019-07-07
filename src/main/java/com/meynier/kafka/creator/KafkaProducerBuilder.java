@@ -11,12 +11,18 @@ import java.util.*;
 
 public class KafkaProducerBuilder {
 
-    public static BrokerStep build() {
-        return new Builder();
+    public static ClientIdStep addBrokers(final String brokers) {
+        return new Builder().addBrokers(brokers);
     }
+
+    public static PortStep addBrokerHost(final String host) {
+        return new Builder().addBrokerHost(host);
+    }
+
 
     public interface BrokerStep {
         ClientIdStep addBrokers(final String brokers);
+        PortStep addBrokerHost(final String host);
     }
 
     public interface PortStep {
@@ -25,24 +31,19 @@ public class KafkaProducerBuilder {
 
     public interface ClientIdStep {
         PortStep addBrokerHost(final String host);
-        TopicStep setClientId(final String client);
-    }
-
-    public interface TopicStep {
-        OptionalConfigurationStep setTopic(final String topicName);
+        OptionalConfigurationStep setClientId(final String client);
     }
 
     public interface OptionalConfigurationStep {
         OptionalConfigurationStep setOptionalParam(final String key,final String value);
-        Producer produce();
+        Producer build();
     }
 
-    private static class Builder implements BrokerStep, ClientIdStep, PortStep, TopicStep, OptionalConfigurationStep {
+    private static class Builder implements BrokerStep, ClientIdStep, PortStep, OptionalConfigurationStep {
 
         private final static String BROKER_PATTERN = "%s:%n";
         private String brokers;
         private String clientId;
-        private String topic;
         private String host;
         private final List<String> kafkaBroker = new ArrayList<>();
         private Properties properties = new Properties();
@@ -68,16 +69,9 @@ public class KafkaProducerBuilder {
         }
 
         @Override
-        public TopicStep setClientId(String clientId) {
+        public OptionalConfigurationStep setClientId(String clientId) {
             checkArg(clientId, "clientId cannot be null or empty");
             this.clientId=clientId;
-            return this;
-        }
-
-        @Override
-        public OptionalConfigurationStep setTopic(String topicName) {
-            checkArg(topicName, "topicName cannot be null or empty");
-            this.topic=topicName;
             return this;
         }
 
@@ -97,7 +91,7 @@ public class KafkaProducerBuilder {
         }
 
         @Override
-        public Producer produce() {
+        public Producer build() {
             properties.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, this.brokers);
             properties.put(ProducerConfig.CLIENT_ID_CONFIG, this.clientId);
             properties.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, LongSerializer.class.getName());

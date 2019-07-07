@@ -10,8 +10,12 @@ import java.util.*;
 
 public class KafkaConsumerBuilder {
 
-    public static BrokerStep build() {
-        return new Builder();
+    public static GroupIdStep addBrokers(final String brokers) {
+        return new Builder().addBrokers(brokers);
+    }
+
+    public static BrokerHostStep addBrokerHost(final String host) {
+        return new Builder().addBrokerHost(host);
     }
 
     public interface BrokerStep {
@@ -23,16 +27,13 @@ public class KafkaConsumerBuilder {
     public interface GroupIdStep {
         BrokerHostStep addBrokerHost(final String host);
 
-        TopicStep setGroupId(final String groupId);
+        OffsetStep setGroupId(final String groupId);
     }
 
     public interface BrokerHostStep {
         GroupIdStep withPort(final int port);
     }
 
-    public interface TopicStep {
-        OffsetStep setTopic(final String topicName);
-    }
 
     public interface OffsetStep {
         OptionalConfigurationStep setOffsetStrategy(OffsetStrategy os);
@@ -51,11 +52,11 @@ public class KafkaConsumerBuilder {
 
         OptionalConfigurationStep disableAutocommit();
 
-        Consumer subscribe();
+        Consumer build();
     }
 
 
-    private static class Builder implements BrokerHostStep, BrokerStep, GroupIdStep, OffsetStep, TopicStep, OptionalConfigurationStep {
+    private static class Builder implements BrokerHostStep, BrokerStep, GroupIdStep, OffsetStep, OptionalConfigurationStep {
 
         private String BROKER_PATTERN = "%s:%n";
 
@@ -114,7 +115,7 @@ public class KafkaConsumerBuilder {
         }
 
         @Override
-        public TopicStep setGroupId(String groupId) {
+        public OffsetStep setGroupId(String groupId) {
             this.groupIdConfig = groupId;
             return this;
         }
@@ -122,13 +123,6 @@ public class KafkaConsumerBuilder {
         @Override
         public GroupIdStep withPort(int port) {
             this.kafkaBroker.add(String.format(BROKER_PATTERN, host, port));
-            return this;
-        }
-
-        @Override
-        public OffsetStep setTopic(String topicName) {
-            checkArg(topicName, "Topic cannot be null or empty");
-            this.topicName = topicName;
             return this;
         }
 
@@ -161,7 +155,7 @@ public class KafkaConsumerBuilder {
 
 
         @Override
-        public Consumer subscribe() {
+        public Consumer build() {
             properties.put(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, String.join(",", this.kafkaBroker));
             properties.put(ConsumerConfig.GROUP_ID_CONFIG, this.groupIdConfig);
             properties.put(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, LongDeserializer.class.getName());
@@ -169,9 +163,7 @@ public class KafkaConsumerBuilder {
             properties.put(ConsumerConfig.MAX_POLL_RECORDS_CONFIG, this.maxPollRecords);
             properties.put(ConsumerConfig.ENABLE_AUTO_COMMIT_CONFIG, this.autoCommit);
             properties.put(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, this.offset);
-            final Consumer consumer = new KafkaConsumer<>(properties);
-            consumer.subscribe(Collections.singletonList(this.topicName));
-            return consumer;
+            return new KafkaConsumer<>(properties);
         }
     }
 
