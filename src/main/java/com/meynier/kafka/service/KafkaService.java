@@ -14,9 +14,7 @@ import java.util.concurrent.ExecutionException;
 
 public class KafkaService {
 
-    public static void runProducer() {
-
-        Producer<Long, String> producer = ProducerCreator.createProducer();
+    public static void runProducer(Producer<Long, String> producer) {
 
         for (int index = 0; index < IKafkaConstants.MESSAGE_COUNT; index++) {
 

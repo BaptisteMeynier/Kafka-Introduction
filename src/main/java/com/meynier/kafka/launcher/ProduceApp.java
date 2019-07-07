@@ -30,7 +30,7 @@ public class ProduceApp {
                         .setTopic(cmd.getOptionValue("t"))
                         .produce();
 
-        KafkaService.runProducer();
+        KafkaService.runProducer(producer);
     }
 
 

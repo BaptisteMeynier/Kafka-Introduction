@@ -20,6 +20,24 @@ bin/kafka-topics.sh --list --zookeeper localhost:2181
 ### Docker-compose
 docker-compose -f src/main/docker/zk-single-kafka-single.yml up   
 
+```
+[baptiste launcher]$ docker ps    
+CONTAINER ID        IMAGE                             COMMAND                  CREATED             STATUS              PORTS                                        NAMES    
+6e23a6b46d58        confluentinc/cp-kafka:5.1.3       "/etc/confluent/do..."   14 seconds ago      Up 13 seconds       9092/tcp, 0.0.0.0:19092->19092/tcp           docker_kafka1_1    
+17bd04652f53        confluentinc/cp-zookeeper:5.1.3   "/etc/confluent/do..."   22 hours ago        Up 13 seconds       2888/tcp, 0.0.0.0:2181->2181/tcp, 3888/tcp   docker_zoo1_1     
+
+docker exec -ti 17bd04652f53 /bin/sh   
+
+kafka-topics --list --zookeeper localhost:2181   
+
+# kafka-topics --list --zookeeper localhost:2181                                                                                   
+Hello-Kafka   
+__confluent.support.metrics   
+__consumer_offsets   
+demo   
+```
+
+
 ```   
 docker-compose -f src/main/docker/k-multiple-kafka-multiple.yml up   
 
@@ -35,6 +53,8 @@ ffe9eca02ce6        confluentinc/cp-zookeeper:latest   "/etc/confluent/do..."   
    
    
 docker exec -it 089416e909ed /bin/sh    
+
+bin/kafka-topics.sh --create --zookeeper localhost:2181 --replication-factor 1  --partitions 1 --topic demo   
 ```
 
 #### Documentation
