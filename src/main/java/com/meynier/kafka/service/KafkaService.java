@@ -1,8 +1,6 @@
 package com.meynier.kafka.service;
 
 import com.meynier.kafka.constants.IKafkaConstants;
-import com.meynier.kafka.creator.ConsumerCreator;
-import com.meynier.kafka.creator.ProducerCreator;
 import org.apache.kafka.clients.consumer.Consumer;
 import org.apache.kafka.clients.consumer.ConsumerRecords;
 import org.apache.kafka.clients.producer.Producer;
@@ -20,7 +18,7 @@ public class KafkaService {
         for (int index = 0; index < IKafkaConstants.MESSAGE_COUNT; index++) {
 
             ProducerRecord<Long, String> record =
-                    new ProducerRecord<Long, String>(topicName, "This is record " + index);
+                    new ProducerRecord<>(topicName, "This is record " + index);
 
             try {
                 RecordMetadata metadata = producer.send(record).get();
@@ -44,7 +42,6 @@ public class KafkaService {
             while (true) {
                 ConsumerRecords<Long, String> consumerRecords = consumer.poll(Duration.ofSeconds(60));
 
-                // 1000 is the time in milliseconds consumer will wait if no record is found at broker.
                 if (consumerRecords.count() == 0) {
                     noMessageFound++;
                     if (noMessageFound > IKafkaConstants.MAX_NO_MESSAGE_FOUND_COUNT)

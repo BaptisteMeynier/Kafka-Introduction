@@ -6,8 +6,6 @@ import com.meynier.kafka.creator.OffsetStrategy;
 import com.meynier.kafka.service.KafkaService;
 import org.apache.commons.cli.*;
 import org.apache.kafka.clients.consumer.Consumer;
-import org.apache.kafka.common.serialization.IntegerDeserializer;
-import org.apache.kafka.common.serialization.StringDeserializer;
 
 
 public class ConsumeApp {
