@@ -8,7 +8,7 @@ import org.apache.kafka.common.Cluster;
 
 public class CustomPartitioner implements Partitioner{
 
-    private static final int PARTITION_COUNT=50;
+    private static final int PARTITION_COUNT=3;
 
     @Override
     public void configure(Map<String, ?> configs) {
